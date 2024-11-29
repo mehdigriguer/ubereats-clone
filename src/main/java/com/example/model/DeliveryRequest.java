@@ -1,9 +1,22 @@
 package com.example.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "DeliveryRequest")
 public class DeliveryRequest {
-    private int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Integer id;
+
+    @ManyToOne(fetch = FetchType.EAGER)
     private Intersection pickup;
+
+    @ManyToOne(fetch = FetchType.EAGER)
     private Intersection delivery;
+
+    @Column(name = "isAssigned")
     private boolean isAssigned;
 
     // Constructors

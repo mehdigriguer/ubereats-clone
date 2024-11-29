@@ -1,16 +1,34 @@
 package com.example.model;
 
+import jakarta.persistence.*;
 import jakarta.xml.bind.annotation.*;
 import java.util.List;
 
+@Entity // Indique que cette classe est une entité persistante
 @XmlRootElement(name = "reseau")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Reseau {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Génération automatique de l'ID
+    private Long id;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "reseau") // Relation One-to-Many avec les noeuds
     @XmlElement(name = "noeud")
     private List<Noeud> noeuds;
 
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "reseau") // Relation One-to-Many avec les tronçons
     @XmlElement(name = "troncon")
     private List<Troncon> troncons;
+
+    // Getters et Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public List<Noeud> getNoeuds() {
         return noeuds;
@@ -29,21 +47,30 @@ public class Reseau {
     }
 }
 
+@Entity // Classe persistante
 @XmlAccessorType(XmlAccessType.FIELD)
 class Noeud {
-    @XmlAttribute
-    private long id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Clé primaire avec auto-incrémentation
+    private Long id;
+
     @XmlAttribute
     private double latitude;
+
     @XmlAttribute
     private double longitude;
 
-    // Getters and Setters
-    public long getId() {
+    @ManyToOne // Chaque noeud est lié à un réseau
+    @JoinColumn(name = "reseau_id") // Colonne FK pour le réseau
+    private Reseau reseau;
+
+    // Getters et Setters
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -62,20 +89,49 @@ class Noeud {
     public void setLongitude(double longitude) {
         this.longitude = longitude;
     }
+
+    public Reseau getReseau() {
+        return reseau;
+    }
+
+    public void setReseau(Reseau reseau) {
+        this.reseau = reseau;
+    }
 }
 
+@Entity // Classe persistante
 @XmlAccessorType(XmlAccessType.FIELD)
 class Troncon {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Clé primaire avec auto-incrémentation
+    private Long id;
+
     @XmlAttribute
     private long origine;
+
     @XmlAttribute
     private long destination;
+
     @XmlAttribute(name = "nomRue")
     private String nomRue;
+
     @XmlAttribute(name = "longueur")
     private double longueur;
 
-    // Getters and Setters
+    @ManyToOne // Chaque tronçon est lié à un réseau
+    @JoinColumn(name = "reseau_id") // Colonne FK pour le réseau
+    private Reseau reseau;
+
+    // Getters et Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public long getOrigine() {
         return origine;
     }
@@ -106,5 +162,13 @@ class Troncon {
 
     public void setLongueur(double longueur) {
         this.longueur = longueur;
+    }
+
+    public Reseau getReseau() {
+        return reseau;
+    }
+
+    public void setReseau(Reseau reseau) {
+        this.reseau = reseau;
     }
 }

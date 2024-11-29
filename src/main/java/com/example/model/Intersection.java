@@ -1,8 +1,19 @@
 package com.example.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "Intersection")
 public class Intersection {
-    private int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Integer id;
+
+    @Column(name = "latitude")
     private double latitude;
+
+    @Column(name = "longitude")
     private double longitude;
 
     // Constructors
