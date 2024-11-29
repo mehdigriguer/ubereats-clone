@@ -15,7 +15,7 @@ import java.io.File;
 import java.util.HashMap;
 
 @Service
-public class CityMapLoader {
+public class CityMapService {
 
     public CityMap loadFromXML(String filePath) throws Exception {
         try {

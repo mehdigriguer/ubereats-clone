@@ -1,5 +1,7 @@
 package com.example.controller;
 
+import com.example.model.Reseau;
+import com.example.service.CityMapService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,7 +15,7 @@ public class CityMapController {
 
     @Autowired
     private CityMapService cityMapService;
-
+    /*
     @PostMapping("/upload")
     public Reseau uploadCityMap(@RequestParam("file") MultipartFile file) {
         try {
@@ -22,7 +24,7 @@ public class CityMapController {
             file.transferTo(tempFile);
 
             // Load and parse the XML
-            Reseau reseau = cityMapService.loadCityMap(tempFile.getAbsolutePath());
+            Reseau reseau = cityMapService.loadFromXML(tempFile.getAbsolutePath());
 
             // Clean up the temporary file
             tempFile.delete();
@@ -32,4 +34,5 @@ public class CityMapController {
             throw new RuntimeException("Error handling the uploaded file", e);
         }
     }
+    */
 }
