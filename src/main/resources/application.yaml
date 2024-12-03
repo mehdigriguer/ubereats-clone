@@ -1,15 +1,14 @@
 # Configuration Spring Boot
 
 spring:
+  datasource:
+    url: '' # Pas d'URL de connexion
   jpa:
     hibernate:
-      ddl-auto: none # Aucun schéma n'est généré
-    show-sql: false  # Désactive l'affichage des requêtes SQL
-  datasource:
-    url: ""          # Aucun URL de base de données configuré
-    username: ""
-    password: ""
-    driver-class-name: ""
+      ddl-auto: none # Désactiver la génération des tables
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+
 
 # Si vous souhaitez réactiver MySQL, décommentez les sections ci-dessous et ajustez les valeurs
 # spring:
