@@ -1,13 +1,8 @@
 package com.example.controller;
 
-import com.example.model.Reseau;
 import com.example.service.CityMapService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.File;
-import java.io.IOException;
 
 @RestController
 @RequestMapping("/city-map")

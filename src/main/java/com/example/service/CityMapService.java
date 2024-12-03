@@ -3,59 +3,70 @@ package com.example.service;
 import com.example.model.CityMap;
 import com.example.model.Intersection;
 import com.example.model.RoadSegment;
-import com.example.model.Reseau;
-import com.example.model.Noeud;
-import com.example.model.Troncon;
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.JAXBException;
-import jakarta.xml.bind.Unmarshaller;
 import org.springframework.stereotype.Service;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class CityMapService {
 
-    public CityMap loadFromXML(String filePath) throws Exception {
+    public CityMap loadFromXML(String filePath) {
+        CityMap cityMap = new CityMap();
+
         try {
-            // Charger le réseau à partir du fichier XML
-            JAXBContext context = JAXBContext.newInstance(Reseau.class);
-            Unmarshaller unmarshaller = context.createUnmarshaller();
-            Reseau reseau = (Reseau) unmarshaller.unmarshal(new File(filePath));
+            File xmlFile = new File(filePath);
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(xmlFile);
+            doc.getDocumentElement().normalize();
 
-            // Créer une nouvelle instance de CityMap
-            CityMap cityMap = new CityMap();
+            // Parse intersections (noeuds)
+            NodeList nodeList = doc.getElementsByTagName("noeud");
+            Map<Long, Intersection> intersections = new HashMap<>();
+            Map<Long, List<RoadSegment>> graph = new HashMap<>();
 
-            // Map intersections by their IDs
-            HashMap<Integer, Intersection> intersectionMap = new HashMap<>();
-            for (Noeud noeud : reseau.getNoeuds()) {
-                Intersection intersection = new Intersection(
-                        (int) noeud.getId(),
-                        noeud.getLatitude(),
-                        noeud.getLongitude()
-                );
-                cityMap.getIntersections().add(intersection);
-                intersectionMap.put((int) noeud.getId(), intersection);
+            for (int i = 0; i < nodeList.getLength(); i++) {
+                Element nodeElement = (Element) nodeList.item(i);
+                long id = Long.parseLong(nodeElement.getAttribute("id"));
+                double latitude = Double.parseDouble(nodeElement.getAttribute("latitude"));
+                double longitude = Double.parseDouble(nodeElement.getAttribute("longitude"));
+                intersections.put(id, new Intersection(id, latitude, longitude));
+                graph.put(id, new ArrayList<>()); // Initialize adjacency list
             }
 
-            // Map road segments
-            for (Troncon troncon : reseau.getTroncons()) {
-                Intersection origin = intersectionMap.get((int) troncon.getOrigine());
-                Intersection destination = intersectionMap.get((int) troncon.getDestination());
-                RoadSegment roadSegment = new RoadSegment(
-                        origin,
-                        destination,
-                        troncon.getNomRue(),
-                        troncon.getLongueur()
-                );
-                cityMap.getRoadSegments().add(roadSegment);
+            // Parse road segments (troncons)
+            NodeList tronconList = doc.getElementsByTagName("troncon");
+            for (int i = 0; i < tronconList.getLength(); i++) {
+                Element tronconElement = (Element) tronconList.item(i);
+                long origin = Long.parseLong(tronconElement.getAttribute("origine"));
+                long destination = Long.parseLong(tronconElement.getAttribute("destination"));
+                double length = Double.parseDouble(tronconElement.getAttribute("longueur"));
+                String streetName = tronconElement.getAttribute("nomRue");
+
+                // Ensure the adjacency list for the origin exists
+                graph.putIfAbsent(origin, new ArrayList<>());
+
+                RoadSegment roadSegment = new RoadSegment(origin, destination, streetName, length);
+                graph.get(origin).add(roadSegment);
             }
 
-            return cityMap;
-        } catch (JAXBException e) {
+            cityMap.setIntersections(intersections);
+            cityMap.setGraph(graph);
+
+        } catch (Exception e) {
             throw new RuntimeException("Error parsing XML file", e);
         }
+
+        return cityMap;
     }
 
 }

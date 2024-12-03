@@ -1,51 +1,41 @@
 package com.example.model;
 
 public class RoadSegment {
-    private Intersection origin;
-    private Intersection destination;
-    private String name;
+    private long origin; // Changed to long
+    private long destination; // Changed to long
+    private String streetName;
     private double length;
 
-    // Constructors
-    public RoadSegment() {}
-
-    public RoadSegment(Intersection origin, Intersection destination, String name, double length) {
+    public RoadSegment(long origin, long destination, String streetName, double length) {
         this.origin = origin;
         this.destination = destination;
-        this.name = name;
+        this.streetName = streetName;
         this.length = length;
     }
 
-    // Getters and Setters
-    public Intersection getOrigin() {
+    public long getOrigin() {
         return origin;
     }
 
-    public void setOrigin(Intersection origin) {
-        this.origin = origin;
-    }
-
-    public Intersection getDestination() {
+    public long getDestination() {
         return destination;
     }
 
-    public void setDestination(Intersection destination) {
-        this.destination = destination;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public String getStreetName() {
+        return streetName;
     }
 
     public double getLength() {
         return length;
     }
 
-    public void setLength(double length) {
-        this.length = length;
+    @Override
+    public String toString() {
+        return "RoadSegment{" +
+                "origin=" + origin +
+                ", destination=" + destination +
+                ", streetName='" + streetName + '\'' +
+                ", length=" + length +
+                '}';
     }
 }
