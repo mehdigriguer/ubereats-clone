@@ -11,14 +11,14 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class CityMapService {
 
+    private final List<CityMap> cityMaps = new ArrayList<>();
+
+    // Load a CityMap from an XML file
     public CityMap loadFromXML(String filePath) {
         CityMap cityMap = new CityMap();
 
@@ -46,13 +46,12 @@ public class CityMapService {
             // Parse road segments (troncons)
             NodeList tronconList = doc.getElementsByTagName("troncon");
             for (int i = 0; i < tronconList.getLength(); i++) {
-                Element tronconElement = (Element) tronconList.item(i);
+                Element tronconElement = (Element) nodeList.item(i);
                 long origin = Long.parseLong(tronconElement.getAttribute("origine"));
                 long destination = Long.parseLong(tronconElement.getAttribute("destination"));
                 double length = Double.parseDouble(tronconElement.getAttribute("longueur"));
                 String streetName = tronconElement.getAttribute("nomRue");
 
-                // Ensure the adjacency list for the origin exists
                 graph.putIfAbsent(origin, new ArrayList<>());
 
                 RoadSegment roadSegment = new RoadSegment(origin, destination, streetName, length);
@@ -62,11 +61,12 @@ public class CityMapService {
             cityMap.setIntersections(intersections);
             cityMap.setGraph(graph);
 
+            cityMaps.add(cityMap);
+
         } catch (Exception e) {
             throw new RuntimeException("Error parsing XML file", e);
         }
 
         return cityMap;
     }
-
 }
