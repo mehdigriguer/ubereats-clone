@@ -1,33 +1,35 @@
 package com.example.controller;
 
+import com.example.model.CityMap;
 import com.example.service.CityMapService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/city-map")
-public class CityMapController {
+public class    CityMapController {
 
     @Autowired
     private CityMapService cityMapService;
-    /*
-    @PostMapping("/upload")
-    public Reseau uploadCityMap(@RequestParam("file") MultipartFile file) {
+
+    /**
+     * Endpoint pour charger une CityMap à partir d'un fichier XML.
+     * @param filePath Chemin absolu vers le fichier XML
+     * @return La CityMap ou une erreur en cas de problème
+     */
+
+    @GetMapping("/loadmap")
+    public ResponseEntity<?> getCityMap() {
         try {
-            // Save the file temporarily
-            File tempFile = File.createTempFile("city-map", ".xml");
-            file.transferTo(tempFile);
-
-            // Load and parse the XML
-            Reseau reseau = cityMapService.loadFromXML(tempFile.getAbsolutePath());
-
-            // Clean up the temporary file
-            tempFile.delete();
-
-            return reseau;
-        } catch (IOException e) {
-            throw new RuntimeException("Error handling the uploaded file", e);
+            // filepath a mettre par defaut
+            // Charger la CityMap à partir du fichier spécifié
+            CityMap cityMap = cityMapService.loadFromXML("src/main/resources/fichiersXMLPickupDelivery/petitPlan.xml");
+            return ResponseEntity.ok(cityMap);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error loading city map from file: " + e.getMessage());
         }
     }
-    */
 }
