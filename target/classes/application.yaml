@@ -1,28 +1,15 @@
-# Configuration Spring Boot
-
 spring:
   datasource:
-    url: '' # Pas d'URL de connexion
+    url: jdbc:mysql://localhost:3306/agile
+    username: root
+    password: mysql9909
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: none # Désactiver la génération des tables
-  autoconfigure:
-    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-
-
-# Si vous souhaitez réactiver MySQL, décommentez les sections ci-dessous et ajustez les valeurs
-# spring:
-#   datasource:
-#     url: jdbc:mysql://localhost:3306/agile
-#     username: root
-#     password: mysql9909
-#     driver-class-name: com.mysql.cj.jdbc.Driver
-#   jpa:
-#     hibernate:
-#       ddl-auto: update
-#     show-sql: true
-#     properties:
-#       hibernate:
-#         format_sql: true
-#     database: mysql
-#     database-platform: org.hibernate.dialect.MySQL8Dialect
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQL8Dialect

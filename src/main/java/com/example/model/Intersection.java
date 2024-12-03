@@ -1,9 +1,9 @@
 package com.example.model;
 
 public class Intersection {
-    private long id; // Changed to long
-    private double latitude;
-    private double longitude;
+    private final long id; // Changed to long
+    private final double latitude;
+    private final double longitude;
 
     public Intersection(long id, double latitude, double longitude) {
         this.id = id;

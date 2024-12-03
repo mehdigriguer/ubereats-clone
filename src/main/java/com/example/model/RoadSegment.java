@@ -1,10 +1,10 @@
 package com.example.model;
 
 public class RoadSegment {
-    private long origin; // Changed to long
-    private long destination; // Changed to long
-    private String streetName;
-    private double length;
+    private final long origin; // Changed to long
+    private final long destination; // Changed to long
+    private final String streetName;
+    private final double length;
 
     public RoadSegment(long origin, long destination, String streetName, double length) {
         this.origin = origin;
