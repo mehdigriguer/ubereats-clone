@@ -1,15 +1,29 @@
+# Configuration Spring Boot
+
 spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/agile
-    username: root
-    password: mysql9909
-    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-    database: mysql
-    database-platform: org.hibernate.dialect.MySQL8Dialect
+      ddl-auto: none # Aucun schéma n'est généré
+    show-sql: false  # Désactive l'affichage des requêtes SQL
+  datasource:
+    url: ""          # Aucun URL de base de données configuré
+    username: ""
+    password: ""
+    driver-class-name: ""
+
+# Si vous souhaitez réactiver MySQL, décommentez les sections ci-dessous et ajustez les valeurs
+# spring:
+#   datasource:
+#     url: jdbc:mysql://localhost:3306/agile
+#     username: root
+#     password: mysql9909
+#     driver-class-name: com.mysql.cj.jdbc.Driver
+#   jpa:
+#     hibernate:
+#       ddl-auto: update
+#     show-sql: true
+#     properties:
+#       hibernate:
+#         format_sql: true
+#     database: mysql
+#     database-platform: org.hibernate.dialect.MySQL8Dialect
