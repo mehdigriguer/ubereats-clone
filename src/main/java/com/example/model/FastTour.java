@@ -1,11 +1,13 @@
 package com.example.model;
 
+import java.util.List;
+
 public class FastTour {
     private long startId;
-    private long pickupId;
-    private long dropoffId;
+    private long pickupId; // Unique, non une liste
+    private long dropoffId; // Unique, non une liste
 
-    // Getters et setters
+    // Getters et Setters
     public long getStartId() {
         return startId;
     }
@@ -30,3 +32,5 @@ public class FastTour {
         this.dropoffId = dropoffId;
     }
 }
+
+

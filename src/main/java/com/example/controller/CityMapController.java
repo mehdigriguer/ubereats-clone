@@ -50,32 +50,49 @@ public class CityMapController {
      * @return Le chemin calculé ou une erreur
      */
     @PostMapping("/fastest-path")
-    public ResponseEntity<?> getFastestPath(@RequestBody FastTour fastTour) {
+    public ResponseEntity<?> getFastestPath(@RequestBody FastTour deliveryRequest) {
         try {
+            // Charger la carte si elle n'est pas encore chargée
             if (loadedCityMap == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("City map is not loaded. Please load the map first by calling /loadmap.");
+                System.out.println("Loading city map...");
+                loadedCityMap = cityMapService.loadFromXML("src/main/resources/fichiersXMLPickupDelivery/petitPlan.xml");
             }
 
-            // Extraire les paramètres de la requête
-            long startId = fastTour.getStartId();
-            long pickupId = fastTour.getPickupId();
-            long dropoffId = fastTour.getDropoffId();
+            // Logs pour vérifier les données reçues
+            System.out.println("Start ID: " + deliveryRequest.getStartId());
+            System.out.println("Pickup ID: " + deliveryRequest.getPickupId());
+            System.out.println("Dropoff ID: " + deliveryRequest.getDropoffId());
 
-            // Calculer le chemin le plus rapide
-            List<Long> fastestPath = PathFinder.findFastestPath(loadedCityMap, startId, pickupId, dropoffId);
+            // Validation des données
+            if (deliveryRequest.getStartId() <= 0 ||
+                    deliveryRequest.getPickupId() <= 0 ||
+                    deliveryRequest.getDropoffId() <= 0) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Invalid request data.");
+            }
+
+            // Calculer le chemin pour des IDs uniques
+            List<Long> fastestPath = PathFinder.findFastestPath(
+                    loadedCityMap,
+                    deliveryRequest.getStartId(),
+                    deliveryRequest.getPickupId(),
+                    deliveryRequest.getDropoffId()
+            );
 
             if (fastestPath == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body("No path found between the specified points.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No path found.");
             }
 
             return ResponseEntity.ok(fastestPath);
         } catch (Exception e) {
+            System.err.println("Error occurred: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error calculating fastest path: " + e.getMessage());
         }
     }
+
+
 
     /*
     @GetMapping("/fastest-path-complete")
