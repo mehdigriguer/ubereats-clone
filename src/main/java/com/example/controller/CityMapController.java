@@ -23,17 +23,23 @@ public class CityMapController {
      * Endpoint pour charger une CityMap à partir d'un fichier XML.
      * @return La CityMap ou une erreur en cas de problème
      */
+    @CrossOrigin(origins = "http://localhost:5173") // Allow requests from your frontend
     @GetMapping("/loadmap")
     public ResponseEntity<?> getCityMap() {
         try {
-            // Charger la CityMap à partir du fichier spécifié
-            loadedCityMap = cityMapService.loadFromXML("src/main/resources/fichiersXMLPickupDelivery/petitPlan.xml");
-            return ResponseEntity.ok("City map successfully loaded.");
+            // Load the city map from the XML file
+            CityMap loadedCityMap = cityMapService.loadFromXML("src/main/resources/fichiersXMLPickupDelivery/petitPlan.xml");
+
+            // Return the loaded city map as JSON
+            return ResponseEntity.ok(loadedCityMap);
         } catch (Exception e) {
+            // Return an error message in case of failure
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error loading city map from file: " + e.getMessage());
         }
     }
+
+
 
     /**
      * Endpoint pour calculer le chemin le plus rapide entre trois points.
