@@ -67,4 +67,39 @@ public class CityMapController {
                     .body("Error calculating fastest path: " + e.getMessage());
         }
     }
+    /*
+    @GetMapping("/fastest-path-complete")
+    public ResponseEntity<?> getFastestPathComplete(
+            @RequestParam("startId") long startId,
+            @RequestParam("pickupIds") List<Long> pickupIds,
+            @RequestParam("dropoffIds") List<Long> dropoffIds) {
+        try {
+            if (loadedCityMap == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("City map is not loaded. Please load the map first by calling /loadmap.");
+            }
+
+            // Vérifiez que les listes pickupIds et dropoffIds ont la même taille
+            if (pickupIds.size() != dropoffIds.size()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("The lists of pickupIds and dropoffIds must have the same size.");
+            }
+
+            // Appeler la fonction findFastestPathComplete
+            // List<Long> fastestPath = PathFinder.findFastestPathComplete(loadedCityMap, startId, pickupIds, dropoffIds);
+
+            if (fastestPath == null || fastestPath.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("No path found for the specified points.");
+            }
+
+            return ResponseEntity.ok(fastestPath);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error calculating fastest path: " + e.getMessage());
+        }
+    }
+
+     */
+
 }
