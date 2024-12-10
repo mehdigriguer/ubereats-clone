@@ -1,6 +1,7 @@
 package com.example.controller;
 
 import com.example.model.CityMap;
+import com.example.model.FastTour;
 import com.example.service.CityMapService;
 import com.example.service.PathFinder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,16 +43,18 @@ public class CityMapController {
      * @param dropoffId ID du point de dépôt
      * @return Le chemin calculé ou une erreur
      */
-    @GetMapping("/fastest-path")
-    public ResponseEntity<?> getFastestPath(
-            @RequestParam("startId") long startId,
-            @RequestParam("pickupId") long pickupId,
-            @RequestParam("dropoffId") long dropoffId) {
+    @PostMapping("/fastest-path")
+    public ResponseEntity<?> getFastestPath(@RequestBody FastTour fastTour) {
         try {
             if (loadedCityMap == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("City map is not loaded. Please load the map first by calling /loadmap.");
             }
+
+            // Extraire les paramètres de la requête
+            long startId = fastTour.getStartId();
+            long pickupId = fastTour.getPickupId();
+            long dropoffId = fastTour.getDropoffId();
 
             // Calculer le chemin le plus rapide
             List<Long> fastestPath = PathFinder.findFastestPath(loadedCityMap, startId, pickupId, dropoffId);
@@ -67,6 +70,7 @@ public class CityMapController {
                     .body("Error calculating fastest path: " + e.getMessage());
         }
     }
+
     /*
     @GetMapping("/fastest-path-complete")
     public ResponseEntity<?> getFastestPathComplete(
