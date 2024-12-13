@@ -67,4 +67,67 @@ public class CityMapController {
                     .body("Error calculating fastest path: " + e.getMessage());
         }
     }
+    /**
+     * Endpoint to optimize the delivery sequence.
+     * @param startId   ID of the warehouse or start point
+     * @param pickups   List of pickup point IDs
+     * @param dropoffs  List of dropoff point IDs
+     * @return The optimized path or an error message
+     */
+    @PostMapping("/optimize-delivery-sequence")
+    public ResponseEntity<?> optimizeDeliverySequence(
+            @RequestParam("startId") long startId,
+            @RequestBody List<Long> pickups,
+            @RequestBody List<Long> dropoffs) {
+        try {
+            if (loadedCityMap == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("City map is not loaded. Please load the map first by calling /loadmap.");
+            }
+
+            if (pickups.size() != dropoffs.size()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("The number of pickups and dropoffs must match.");
+            }
+
+            List<Long> optimizedPath = PathFinder.optimizeDeliverySequenceWithPath(loadedCityMap, startId, pickups, dropoffs);
+
+            return ResponseEntity.ok(optimizedPath);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error optimizing delivery sequence: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Endpoint to plan a predefined delivery route.
+     * @param startId   ID of the warehouse or start point
+     * @param pickups   List of pickup point IDs
+     * @param dropoffs  List of dropoff point IDs
+     * @return The planned route or an error message
+     */
+    @PostMapping("/plan-delivery-route")
+    public ResponseEntity<?> planDeliveryRoute(
+            @RequestParam("startId") long startId,
+            @RequestBody List<Long> pickups,
+            @RequestBody List<Long> dropoffs) {
+        try {
+            if (loadedCityMap == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("City map is not loaded. Please load the map first by calling /loadmap.");
+            }
+
+            if (pickups.size() != dropoffs.size()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("The number of pickups and dropoffs must match.");
+            }
+
+            List<Long> plannedRoute = PathFinder.planDeliveryRoute(loadedCityMap, startId, pickups, dropoffs);
+
+            return ResponseEntity.ok(plannedRoute);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error planning delivery route: " + e.getMessage());
+        }
+    }
 }
