@@ -12,6 +12,38 @@ import static org.junit.jupiter.api.Assertions.*;
 class PathFinderTest {
 
     @Test
+    void testOptimizeForDeliveryTimes() {
+        CityMap cityMap = new CityMap();
+
+        Map<Long, Intersection> intersections = new HashMap<>();
+        for (long i = 1; i <= 5; i++) {
+            intersections.put(i, new Intersection(i, 45.0 + i, 5.0 + i));
+        }
+        cityMap.setIntersections(intersections);
+
+        Map<Long, List<RoadSegment>> graph = new HashMap<>();
+        graph.put(1L, Arrays.asList(new RoadSegment(1L, 2L, "Street A", 1000)));
+        graph.put(2L, Arrays.asList(new RoadSegment(2L, 3L, "Street B", 1200)));
+        graph.put(3L, Arrays.asList(new RoadSegment(3L, 4L, "Street C", 1000)));
+        graph.put(4L, Arrays.asList(new RoadSegment(4L, 5L, "Street D", 1000)));
+        graph.put(5L, Arrays.asList(new RoadSegment(5L, 1L, "Street E", 2000)));
+        cityMap.setGraph(graph);
+
+        long start = 1;
+        List<Long> pickups = Arrays.asList(2L, 4L);
+        List<Long> dropoffs = Arrays.asList(3L, 5L);
+
+        List<Long> result = PathFinder.optimizeDeliverySequenceWithPath(cityMap, start, pickups, dropoffs);
+
+        assertNotNull(result, "The result should not be null");
+        System.out.println("Optimized Path: " + result);
+
+        List<Long> expectedPath = Arrays.asList(1L, 2L, 3L, 4L, 5L, 1L);
+        assertEquals(expectedPath, result, "The optimized path is not as expected");
+    }
+
+
+    @Test
     void testConstrainedPathReordering() {
         CityMap cityMap = new CityMap();
 
@@ -25,19 +57,20 @@ class PathFinderTest {
         // Add road segments
         Map<Long, List<RoadSegment>> graph = new HashMap<>();
         graph.put(1L, Arrays.asList(new RoadSegment(1L, 2L, "Street A", 1000)));
-        graph.put(2L, Arrays.asList(new RoadSegment(2L, 3L, "Street B", 300),
-                                    new RoadSegment(2L, 4L, "Street C", 200)));
-        graph.put(3L, Arrays.asList(new RoadSegment(3L, 5L, "Street D", 500),
-                                    new RoadSegment(3L, 4L, "Street E", 600)));
-        graph.put(4L, Arrays.asList(new RoadSegment(4L, 5L, "Street E", 500),
-                                    new RoadSegment(4L, 3L, "Street F", 600)));
-        graph.put(5L, Arrays.asList(new RoadSegment(5L, 3L, "Street E", 749)));
+        graph.put(2L, Arrays.asList(new RoadSegment(2L, 3L, "Street B", 500),
+                                    new RoadSegment(2L, 4L, "Street C", 700)));
+        graph.put(3L, Arrays.asList(new RoadSegment(3L, 5L, "Street D", 400),
+                                    new RoadSegment(3L, 4L, "Street E", 300)));
+        graph.put(4L, Arrays.asList(new RoadSegment(4L, 5L, "Street E", 700),
+                                    new RoadSegment(4L, 3L, "Street F", 300)));
+        graph.put(5L, Arrays.asList(new RoadSegment(5L, 3L, "Street E", 400),
+                                    new RoadSegment(5L, 1L, "Street F", 2000)));
         cityMap.setGraph(graph);
 
         // Define the test scenario
         long start = 1;
-        List<Long> pickups = Arrays.asList(2L, 3L);
-        List<Long> dropoffs = Arrays.asList(4L, 5L);
+        List<Long> pickups = Arrays.asList(2L, 4L);
+        List<Long> dropoffs = Arrays.asList(3L, 5L);
 
         // Run the pathfinding method
         List<Long> result = PathFinder.optimizeDeliverySequenceWithPath(cityMap, start, pickups, dropoffs);
@@ -47,7 +80,7 @@ class PathFinderTest {
         System.out.println("Optimized Path: " + result);
 
         // Expected path: Reordering due to constraints
-        List<Long> expectedPath = Arrays.asList(1L, 2L, 4L, 3L, 5L);
+        List<Long> expectedPath = Arrays.asList(1L, 2L, 4L, 3L, 5L, 1L);
         assertEquals(expectedPath, result, "The optimized path is not as expected");
     }
 
