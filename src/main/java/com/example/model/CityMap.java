@@ -1,36 +1,62 @@
 package com.example.model;
 
-
+import jakarta.persistence.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+@Entity
+@Table(name = "city_maps") // Nom de la table dans la base de données
 public class CityMap {
-    private Map<Long, Intersection> intersections = new HashMap<>();
-    private Map<Long, List<RoadSegment>> graph = new HashMap<>();
 
-    public Map<Long, Intersection> getIntersections() {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Clé primaire auto-incrémentée
+    @Column(name = "id")
+    private Long id;
+
+    // Liste des intersections liées à cette carte
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "city_map_id") // Clé étrangère dans la table des intersections
+    private List<Intersection> intersections = new ArrayList<>();
+
+    // Liste des segments de route liés à cette carte
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "city_map_id") // Clé étrangère dans la table des segments de route
+    private List<RoadSegment> roadSegments = new ArrayList<>();
+
+    // Constructeur par défaut requis par JPA
+    public CityMap() {}
+
+    // Getters et setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public List<Intersection> getIntersections() {
         return intersections;
     }
 
-    public void setIntersections(Map<Long, Intersection> intersections) {
+    public void setIntersections(List<Intersection> intersections) {
         this.intersections = intersections;
     }
 
-    public Map<Long, List<RoadSegment>> getGraph() {
-        return graph;
+    public List<RoadSegment> getRoadSegments() {
+        return roadSegments;
     }
 
-    public void setGraph(Map<Long, List<RoadSegment>> graph) {
-        this.graph = graph;
+    public void setRoadSegments(List<RoadSegment> roadSegments) {
+        this.roadSegments = roadSegments;
     }
 
     @Override
     public String toString() {
         return "CityMap{" +
-                "intersections=" + intersections +
-                ", graph=" + graph +
+                "id=" + id +
+                ", intersections=" + intersections +
+                ", roadSegments=" + roadSegments +
                 '}';
     }
 }

@@ -3,6 +3,7 @@ package com.example.service;
 import com.example.model.CityMap;
 import com.example.model.Intersection;
 import com.example.model.RoadSegment;
+import com.example.repository.CityMapRepository;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -12,14 +13,20 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class CityMapService {
 
-    private final List<CityMap> cityMaps = new ArrayList<>();
+    private final CityMapRepository cityMapRepository;
 
-    // Load a CityMap from an XML file
+    // Constructor injection for the repository
+    public CityMapService(CityMapRepository cityMapRepository) {
+        this.cityMapRepository = cityMapRepository;
+    }
+
+    // Load a CityMap from an XML file and save it to the database
     public CityMap loadFromXML(String filePath) {
         CityMap cityMap = new CityMap();
 
@@ -41,8 +48,6 @@ public class CityMapService {
             // Parse intersections (noeuds)
             NodeList nodeList = doc.getElementsByTagName("noeud");
             System.out.println("Number of noeuds: " + nodeList.getLength());
-            Map<Long, Intersection> intersections = new HashMap<>();
-            Map<Long, List<RoadSegment>> graph = new HashMap<>();
 
             for (int i = 0; i < nodeList.getLength(); i++) {
                 Element nodeElement = (Element) nodeList.item(i);
@@ -50,8 +55,9 @@ public class CityMapService {
                 long id = Long.parseLong(nodeElement.getAttribute("id"));
                 double latitude = Double.parseDouble(nodeElement.getAttribute("latitude"));
                 double longitude = Double.parseDouble(nodeElement.getAttribute("longitude"));
-                intersections.put(id, new Intersection(id, latitude, longitude));
-                graph.put(id, new ArrayList<>()); // Initialize adjacency list
+
+                Intersection intersection = new Intersection(id, latitude, longitude);
+                cityMap.getIntersections().add(intersection); // Add to CityMap
             }
 
             // Parse road segments (troncons)
@@ -65,14 +71,13 @@ public class CityMapService {
                 double length = Double.parseDouble(tronconElement.getAttribute("longueur"));
                 String streetName = tronconElement.getAttribute("nomRue");
 
-                graph.putIfAbsent(origin, new ArrayList<>());
-
                 RoadSegment roadSegment = new RoadSegment(origin, destination, streetName, length);
-                graph.get(origin).add(roadSegment);
+                cityMap.getRoadSegments().add(roadSegment); // Add to CityMap
             }
 
-            cityMap.setIntersections(intersections);
-            cityMap.setGraph(graph);
+            // Save the CityMap to the database
+            cityMap = cityMapRepository.save(cityMap);
+            System.out.println("CityMap saved to the database with ID: " + cityMap.getId());
 
         } catch (Exception e) {
             System.err.println("Error parsing XML file: " + e.getMessage());
@@ -83,4 +88,7 @@ public class CityMapService {
         return cityMap;
     }
 
+    public CityMap getCityMapById(long id) {
+        return cityMapRepository.findById(id).orElse(null);
+    }
 }

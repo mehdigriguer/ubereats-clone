@@ -1,11 +1,15 @@
 package com.example.service;
 
 import com.example.model.CityMap;
+import com.example.model.Intersection;
 import com.example.model.RoadSegment;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+@Service
 public class PathFinder {
+
     private static final double MAX_DELIVERY_TIME = 5.0; // en minutes
     private static final double SPEED_KMH = 15.0; // vitesse du livreur en km/h
 
@@ -41,7 +45,10 @@ public class PathFinder {
             long current = openSet.poll()[0];
             if (current == goal) return reconstructPath(cameFrom, current);
 
-            for (RoadSegment segment : cityMap.getGraph().get(current)) {
+            // Rechercher les voisins de `current` dans les segments de route
+            List<RoadSegment> neighbors = findNeighbors(cityMap, current);
+
+            for (RoadSegment segment : neighbors) {
                 long neighbor = segment.getDestination();
                 double tentativeGScore = gScore.getOrDefault(current, Double.MAX_VALUE) + segment.getLength();
                 double timeMinutes = tentativeGScore / (SPEED_KMH * 1000.0 / 60);
@@ -57,6 +64,16 @@ public class PathFinder {
             }
         }
         return null;
+    }
+
+    private static List<RoadSegment> findNeighbors(CityMap cityMap, long intersectionId) {
+        List<RoadSegment> neighbors = new ArrayList<>();
+        for (RoadSegment roadSegment : cityMap.getRoadSegments()) {
+            if (roadSegment.getOrigin() == intersectionId) {
+                neighbors.add(roadSegment);
+            }
+        }
+        return neighbors;
     }
 
     private static List<Long> reconstructPath(Map<Long, Long> cameFrom, long current) {

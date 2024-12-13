@@ -29,8 +29,8 @@ public class CityMapController {
     public ResponseEntity<?> getCityMap() {
         try {
             // Load the city map from the XML file
-            CityMap loadedCityMap = cityMapService.loadFromXML("src/main/resources/fichiersXMLPickupDelivery/petitPlan.xml");
-
+            // CityMap loadedCityMap = cityMapService.loadFromXML("src/main/resources/fichiersXMLPickupDelivery/petitPlan.xml");
+            CityMap loadedCityMap = cityMapService.getCityMapById(1) ;
             // Return the loaded city map as JSON
             return ResponseEntity.ok(loadedCityMap);
         } catch (Exception e) {
