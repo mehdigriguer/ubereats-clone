@@ -312,4 +312,13 @@ public class PathFinder {
         path.add(0, current); // Ajouter le premier nœud (point de départ)
         return path;
     }
+
+    public static List<double[]> convertPathToCoordinates(CityMapService cityMapService, List<Long> path) {
+        List<double[]> coordinates = new ArrayList<>();
+        for (Long id : path) {
+            coordinates.add(cityMapService.findLatLongFromId(id));
+        }
+        return coordinates;
+    }
+
 }
