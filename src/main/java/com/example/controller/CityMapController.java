@@ -1,6 +1,7 @@
 package com.example.controller;
 
 import com.example.model.CityMap;
+import com.example.model.FastTour;
 import com.example.service.CityMapService;
 import com.example.service.PathFinder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,17 +24,23 @@ public class CityMapController {
      * Endpoint pour charger une CityMap à partir d'un fichier XML.
      * @return La CityMap ou une erreur en cas de problème
      */
+    @CrossOrigin(origins = "http://localhost:5173") // Allow requests from your frontend
     @GetMapping("/loadmap")
     public ResponseEntity<?> getCityMap() {
         try {
-            // Charger la CityMap à partir du fichier spécifié
-            loadedCityMap = cityMapService.loadFromXML("src/main/resources/fichiersXMLPickupDelivery/petitPlan.xml");
-            return ResponseEntity.ok("City map successfully loaded.");
+            // Load the city map from the XML file
+            CityMap loadedCityMap = cityMapService.loadFromXML("src/main/resources/fichiersXMLPickupDelivery/petitPlan.xml");
+
+            // Return the loaded city map as JSON
+            return ResponseEntity.ok(loadedCityMap);
         } catch (Exception e) {
+            // Return an error message in case of failure
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error loading city map from file: " + e.getMessage());
         }
     }
+
+
 
     /**
      * Endpoint pour calculer le chemin le plus rapide entre trois points.
@@ -42,23 +49,75 @@ public class CityMapController {
      * @param dropoffId ID du point de dépôt
      * @return Le chemin calculé ou une erreur
      */
-    @GetMapping("/fastest-path")
-    public ResponseEntity<?> getFastestPath(
+    @PostMapping("/fastest-path")
+    public ResponseEntity<?> getFastestPath(@RequestBody FastTour deliveryRequest) {
+        try {
+            // Charger la carte si elle n'est pas encore chargée
+            if (loadedCityMap == null) {
+                System.out.println("Loading city map...");
+                loadedCityMap = cityMapService.loadFromXML("src/main/resources/fichiersXMLPickupDelivery/petitPlan.xml");
+            }
+
+            // Logs pour vérifier les données reçues
+            System.out.println("Start ID: " + deliveryRequest.getStartId());
+            System.out.println("Pickup ID: " + deliveryRequest.getPickupId());
+            System.out.println("Dropoff ID: " + deliveryRequest.getDropoffId());
+
+            // Validation des données
+            if (deliveryRequest.getStartId() <= 0 ||
+                    deliveryRequest.getPickupId() <= 0 ||
+                    deliveryRequest.getDropoffId() <= 0) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Invalid request data.");
+            }
+
+            // Calculer le chemin pour des IDs uniques
+            List<Long> fastestPath = PathFinder.findFastestPath(
+                    loadedCityMap,
+                    deliveryRequest.getStartId(),
+                    deliveryRequest.getPickupId(),
+                    deliveryRequest.getDropoffId()
+            );
+
+            if (fastestPath == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No path found.");
+            }
+
+            return ResponseEntity.ok(fastestPath);
+        } catch (Exception e) {
+            System.err.println("Error occurred: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error calculating fastest path: " + e.getMessage());
+        }
+    }
+
+
+
+    /*
+    @GetMapping("/fastest-path-complete")
+    public ResponseEntity<?> getFastestPathComplete(
             @RequestParam("startId") long startId,
-            @RequestParam("pickupId") long pickupId,
-            @RequestParam("dropoffId") long dropoffId) {
+            @RequestParam("pickupIds") List<Long> pickupIds,
+            @RequestParam("dropoffIds") List<Long> dropoffIds) {
         try {
             if (loadedCityMap == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("City map is not loaded. Please load the map first by calling /loadmap.");
             }
 
-            // Calculer le chemin le plus rapide
-            List<Long> fastestPath = PathFinder.findFastestPath(loadedCityMap, startId, pickupId, dropoffId);
+            // Vérifiez que les listes pickupIds et dropoffIds ont la même taille
+            if (pickupIds.size() != dropoffIds.size()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("The lists of pickupIds and dropoffIds must have the same size.");
+            }
 
-            if (fastestPath == null) {
+            // Appeler la fonction findFastestPathComplete
+            // List<Long> fastestPath = PathFinder.findFastestPathComplete(loadedCityMap, startId, pickupIds, dropoffIds);
+
+            if (fastestPath == null || fastestPath.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body("No path found between the specified points.");
+                        .body("No path found for the specified points.");
             }
 
             return ResponseEntity.ok(fastestPath);
