@@ -18,7 +18,7 @@ import java.util.*;
 public class CityMapService {
 
     private final List<CityMap> cityMaps = new ArrayList<>();
-
+    private Map<Long, double[]> idToCoordinates = new HashMap<>();
     // Load a CityMap from an XML file
     public CityMap loadFromXML(String filePath) {
         CityMap cityMap = new CityMap();
@@ -52,6 +52,7 @@ public class CityMapService {
                 double longitude = Double.parseDouble(nodeElement.getAttribute("longitude"));
                 intersections.put(id, new Intersection(id, latitude, longitude));
                 graph.put(id, new ArrayList<>()); // Initialize adjacency list
+                idToCoordinates.put(id, new double[]{latitude, longitude}); // Stocker les coordonnées
             }
 
             // Parse road segments (troncons)
@@ -81,6 +82,14 @@ public class CityMapService {
         }
 
         return cityMap;
+    }
+
+    // Trouver les coordonnées d'un ID donné
+    public double[] findLatLongFromId(long id) {
+        if (!idToCoordinates.containsKey(id)) {
+            throw new IllegalArgumentException("ID not found: " + id);
+        }
+        return idToCoordinates.get(id);
     }
 
 }
