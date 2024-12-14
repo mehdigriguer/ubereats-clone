@@ -46,7 +46,6 @@ public class CityMapService {
 
             for (int i = 0; i < nodeList.getLength(); i++) {
                 Element nodeElement = (Element) nodeList.item(i);
-                System.out.println("Parsing noeud #" + i);
                 long id = Long.parseLong(nodeElement.getAttribute("id"));
                 double latitude = Double.parseDouble(nodeElement.getAttribute("latitude"));
                 double longitude = Double.parseDouble(nodeElement.getAttribute("longitude"));
@@ -57,10 +56,8 @@ public class CityMapService {
 
             // Parse road segments (troncons)
             NodeList tronconList = doc.getElementsByTagName("troncon");
-            System.out.println("Number of troncons: " + tronconList.getLength());
             for (int i = 0; i < tronconList.getLength(); i++) {
                 Element tronconElement = (Element) tronconList.item(i);
-                System.out.println("Parsing troncon #" + i);
                 long origin = Long.parseLong(tronconElement.getAttribute("origine"));
                 long destination = Long.parseLong(tronconElement.getAttribute("destination"));
                 double length = Double.parseDouble(tronconElement.getAttribute("longueur"));

@@ -74,11 +74,8 @@ public class DeliveryCityMapController {
             if (fastestPath == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No path found.");
             }
-
-            // Convertir les IDs en coordonnées
-            List<double[]> coordinates = PathFinder.convertPathToCoordinates(cityMapService, fastestPath);
-
-            return ResponseEntity.ok(coordinates);
+            List <double[]> coordinates = PathFinder.convertPathToCoordinates(cityMapService, fastestPath);
+            return ResponseEntity.ok().body(coordinates);
         } catch (Exception e) {
             System.err.println("Error occurred: " + e.getMessage());
             e.printStackTrace();
