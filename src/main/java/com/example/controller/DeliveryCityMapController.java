@@ -39,6 +39,69 @@ public class DeliveryCityMapController {
         }
     }
 
+    @PostMapping("/optimize-sequence")
+    public ResponseEntity<?> optimizeDeliveryRoute(@RequestBody Map<String, Object> requestData) {
+        try {
+            // Vérification et extraction des données depuis le JSON
+            if (!requestData.containsKey("start") || !requestData.containsKey("pickups") || !requestData.containsKey("dropoffs")) {
+                return ResponseEntity.badRequest().body("Invalid request data: missing required fields.");
+            }
+
+            // Extraire et caster les valeurs en Long
+            Long startId = ((Number) requestData.get("start")).longValue();
+
+            @SuppressWarnings("unchecked")
+            List<Object> rawPickups = (List<Object>) requestData.get("pickups");
+            List<Long> pickupIds = rawPickups.stream()
+                    .map(pickup -> ((Number) pickup).longValue())
+                    .toList();
+
+            @SuppressWarnings("unchecked")
+            List<Object> rawDropoffs = (List<Object>) requestData.get("dropoffs");
+            List<Long> dropoffIds = rawDropoffs.stream()
+                    .map(dropoff -> ((Number) dropoff).longValue())
+                    .toList();
+
+
+            // Validation
+            if (pickupIds.size() != dropoffIds.size()) {
+                return ResponseEntity.badRequest().body("Pickup and dropoff lists must have the same size.");
+            }
+
+            // Charger la CityMap si elle n'est pas déjà chargée
+            if (loadedCityMap == null) {
+                loadedCityMap = cityMapService.loadFromXML("src/main/resources/fichiersXMLPickupDelivery/petitPlan.xml");
+            }
+
+            // Appeler la fonction pour optimiser la route
+            List<Long> optimizedPath = PathFinder.optimizeDeliverySequenceWithPath(
+                    loadedCityMap,
+                    startId,
+                    pickupIds.stream().map(Long::valueOf).toList(), // Conversion en Long
+                    dropoffIds.stream().map(Long::valueOf).toList()
+            );
+
+            // **Conversion des IDs en coordonnées lat/lng**
+            List<double[]> coordinates = optimizedPath.stream()
+                    .map(id -> {
+                        double[] latLng = cityMapService.findLatLongFromId(id);
+                        if (latLng == null) {
+                            throw new IllegalArgumentException("ID not found in map: " + id);
+                        }
+                        return latLng;
+                    })
+                    .toList();
+
+            // Retourner les coordonnées au front-end
+            return ResponseEntity.ok(coordinates);
+
+        } catch (Exception e) {
+            // Gestion des erreurs
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error optimizing delivery route: " + e.getMessage());
+        }
+    }
+
     /**
      * Endpoint pour calculer le chemin le plus rapide entre trois points.
      * @param deliveryRequest Requête contenant startId, pickupId et dropoffId
