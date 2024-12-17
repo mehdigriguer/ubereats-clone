@@ -74,7 +74,7 @@ public class DeliveryCityMapController {
             }
 
             // Appeler la fonction pour optimiser la route
-            List<Long> optimizedPath = PathFinder.optimizeDeliverySequenceWithPath(
+            List<Long> optimizedPath = PathFinder.greedyOptimizeDeliverySequenceWithPath(
                     loadedCityMap,
                     startId,
                     pickupIds.stream().map(Long::valueOf).toList(), // Conversion en Long

@@ -2,12 +2,121 @@ package com.example.service;
 
 import com.example.model.CityMap;
 import com.example.model.RoadSegment;
+import com.example.model.State;
 
 import java.util.*;
 
 public class PathFinder {
     private static final double MAX_DELIVERY_TIME = 5.0; // en minutes
     private static final double SPEED_KMH = 15.0; // vitesse du livreur en km/h
+
+
+    public static List<Long> greedyOptimizeDeliverySequenceWithPath(
+            CityMap cityMap, long start, List<Long> pickups, List<Long> dropoffs) {
+
+        List<Long> bestPath = null;
+        double bestTime = Double.MAX_VALUE;
+
+        PriorityQueue<State> queue = new PriorityQueue<>(Comparator.comparingDouble(state -> state.elapsedTime));
+        queue.add(new State(start, new ArrayList<>(List.of(start)), new HashSet<>(pickups), new HashMap<>(), 0.0));
+
+        while (!queue.isEmpty()) {
+            State currentState = queue.poll();
+
+            // Debugging: Current state
+            System.out.println("\nExploring State:");
+            System.out.println("Current Position: " + currentState.currentPosition);
+            System.out.println("Path So Far: " + currentState.path);
+            System.out.println("Elapsed Time: " + currentState.elapsedTime);
+            System.out.println("Unvisited Pickups: " + currentState.unvisitedPickups);
+            System.out.println("Active Deliveries: " + currentState.activeDeliveries);
+
+            // Check if this state completes all deliveries
+            if (currentState.unvisitedPickups.isEmpty() && currentState.activeDeliveries.isEmpty()) {
+                // Add return to warehouse
+                List<Long> pathToWarehouse = aStar(cityMap, currentState.currentPosition, start, false);
+                if (pathToWarehouse != null) {
+                    currentState.path.addAll(pathToWarehouse.subList(1, pathToWarehouse.size()));
+                    currentState.elapsedTime += calculatePathTime(cityMap, pathToWarehouse);
+                }
+
+                System.out.println("Completed Path: " + currentState.path);
+                System.out.println("Total Time: " + currentState.elapsedTime);
+
+                if (currentState.elapsedTime < bestTime) {
+                    bestTime = currentState.elapsedTime;
+                    bestPath = new ArrayList<>(currentState.path);
+                }
+                continue;
+            }
+
+            // Explore pickups
+            // Explore pickups
+            for (long pickup : currentState.unvisitedPickups) {
+                List<Long> pathToPickup = aStar(cityMap, currentState.currentPosition, pickup, false);
+                if (pathToPickup != null) {
+                    System.out.println("Evaluating Pickup: " + pickup);
+                    System.out.println("Path to Pickup: " + pathToPickup);
+
+                    State newState = currentState.clone();
+                    newState.path.addAll(pathToPickup.subList(1, pathToPickup.size()));
+                    newState.elapsedTime += calculatePathTime(cityMap, pathToPickup);
+                    newState.currentPosition = pickup;
+
+                    // Record pickup time immediately
+                    newState.pickupTimes.put(pickup, newState.elapsedTime);
+                    System.out.println("Pickup Time Recorded: " + pickup + " at " + newState.elapsedTime);
+
+                    // Move pickup to active deliveries
+                    newState.unvisitedPickups.remove(pickup);
+                    newState.activeDeliveries.put(pickup, dropoffs.get(pickups.indexOf(pickup)));
+
+                    queue.add(newState);
+                }
+            }
+
+            // Explore deliveries
+            for (Map.Entry<Long, Long> entry : currentState.activeDeliveries.entrySet()) {
+                long pickup = entry.getKey();
+                long delivery = entry.getValue();
+
+                List<Long> pathToDelivery = aStar(cityMap, currentState.currentPosition, delivery, true);
+                if (pathToDelivery != null) {
+                    double timeToDelivery = currentState.elapsedTime + calculatePathTime(cityMap, pathToDelivery);
+
+                    // Safeguard: Check if pickupTimes contains the pickup key
+                    if (!currentState.pickupTimes.containsKey(pickup)) {
+                        System.out.println("Warning: Pickup time not found for pickup " + pickup);
+                        continue; // Skip this delivery if pickup time is missing
+                    }
+
+                    double timeFromPickup = timeToDelivery - currentState.pickupTimes.get(pickup);
+                    System.out.println("Evaluating Delivery: " + delivery);
+                    System.out.println("Path to Delivery: " + pathToDelivery);
+                    System.out.println("Time to Delivery: " + timeToDelivery);
+                    System.out.println("Time from Pickup to Delivery: " + timeFromPickup);
+
+                    if (timeFromPickup <= MAX_DELIVERY_TIME) {
+                        State newState = currentState.clone();
+                        newState.path.addAll(pathToDelivery.subList(1, pathToDelivery.size()));
+                        newState.elapsedTime = timeToDelivery;
+                        newState.currentPosition = delivery;
+                        newState.activeDeliveries.remove(pickup);
+                        queue.add(newState);
+                    }
+                }
+            }
+
+        }
+
+        if (bestPath == null) {
+            throw new RuntimeException("No feasible route found.");
+        }
+
+        System.out.println("\nBest Path Found: " + bestPath);
+        System.out.println("Minimum Time: " + bestTime);
+        return bestPath;
+    }
 
     public static List<Long> optimizeDeliverySequenceWithPath(
             CityMap cityMap, long start, List<Long> pickups, List<Long> dropoffs) {
