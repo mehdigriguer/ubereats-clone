@@ -8,6 +8,7 @@ import org.apache.coyote.Response;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class DataService {
@@ -24,5 +25,9 @@ public class DataService {
 
     public List<Courier> getAllCouriers() {
         return courierRepository.findAll();
+    }
+
+    public Optional<Courier> getCourierById(int id) {
+        return courierRepository.findById(id) ;
     }
 }

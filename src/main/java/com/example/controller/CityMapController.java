@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/city-map")
@@ -53,12 +54,12 @@ public class CityMapController {
     public ResponseEntity<?> optimizeAndPersistTour(@RequestBody Map<String, Object> requestData) {
         try {
             // Étape 1 : Vérification et extraction des données
-            if (!requestData.containsKey("start") || !requestData.containsKey("pickups") || !requestData.containsKey("dropoffs")) {
+            if (!requestData.containsKey("start") || !requestData.containsKey("pickups") || !requestData.containsKey("dropoffs") || !requestData.containsKey("courier")) {
                 return ResponseEntity.badRequest().body("Invalid request data: missing required fields.");
             }
 
             Long startId = ((Number) requestData.get("start")).longValue();
-
+            int courierId = ((Number) requestData.get("courier")).intValue();
             @SuppressWarnings("unchecked")
             List<Object> rawPickups = (List<Object>) requestData.get("pickups");
             List<Long> pickupIds = rawPickups.stream()
@@ -94,9 +95,8 @@ public class CityMapController {
             tour.setWarehouse(warehouse);
             System.out.println("le start id est : " + startId);
             System.out.println("la warehouse est : " + warehouse);
-            List<Courier> couriers = dataService.getAllCouriers();
-            Courier courier = couriers.get(0);
-            tour.setCourier(courier);
+            Optional<Courier> courier = dataService.getCourierById(courierId);
+            tour.setCourier(courier.orElse(null));
 
             // Créer les DeliveryRequests à partir des IDs de pickup et dropoff
             List<DeliveryRequest> deliveryRequests = cityMapService.createDeliveryRequests(pickupIds, dropoffIds);
