@@ -1,7 +1,9 @@
 package com.example.service;
 
 import com.example.model.Courier;
+import com.example.model.Tour;
 import com.example.repository.CourierRepository;
+import com.example.repository.TourRepository;
 import org.apache.coyote.Response;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +13,8 @@ import java.util.List;
 public class DataService {
     private final CourierRepository courierRepository;
 
-    public DataService(CourierRepository courierRepository) {
+
+    public DataService(CourierRepository courierRepository, TourRepository tourRepository) {
         this.courierRepository = courierRepository;
     }
 

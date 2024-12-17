@@ -1,9 +1,9 @@
 package com.example.service;
 
-import com.example.model.CityMap;
-import com.example.model.Intersection;
-import com.example.model.RoadSegment;
+import com.example.model.*;
 import com.example.repository.CityMapRepository;
+import com.example.repository.IntersectionRepository;
+import com.example.repository.TourRepository;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -20,10 +20,14 @@ import java.util.List;
 public class CityMapService {
 
     private final CityMapRepository cityMapRepository;
+    private final TourRepository tourRepository;
+    private final IntersectionRepository intersectionRepository;
 
     // Constructor injection for the repository
-    public CityMapService(CityMapRepository cityMapRepository) {
+    public CityMapService(CityMapRepository cityMapRepository, TourRepository tourRepository, IntersectionRepository intersectionRepository) {
         this.cityMapRepository = cityMapRepository;
+        this.tourRepository = tourRepository;
+        this.intersectionRepository = intersectionRepository;
     }
 
     // Load a CityMap from an XML file and save it to the database
@@ -91,4 +95,65 @@ public class CityMapService {
     public CityMap getCityMapById(long id) {
         return cityMapRepository.findById(id).orElse(null);
     }
+
+    public double[] findLatLongFromId(long id) {
+        Intersection intersection = intersectionRepository.findById(id).orElse(null);
+        assert intersection != null;
+        return new double[]{intersection.getLatitude(), intersection.getLongitude()};
+    }
+
+
+    public Intersection findIntersectionById(Long id) {
+        return intersectionRepository.findById(id).orElse(null);
+    }
+
+    public Tour addTour(Tour tour, Long warehouseId) {
+        // Récupérer l'Intersection à partir de l'ID
+        Intersection warehouse = intersectionRepository.findById(warehouseId)
+                .orElseThrow(() -> new IllegalArgumentException("Warehouse with ID " + warehouseId + " not found"));
+
+        // Associer l'entrepôt au Tour
+        tour.setWarehouse(warehouse);
+
+        // Vérifie que le Courier est également initialisé
+        if (tour.getCourier() == null) {
+            throw new IllegalArgumentException("Courier must not be null");
+        }
+
+        // Sauvegarder le Tour
+        return tourRepository.save(tour);
+    }
+
+
+    public List<DeliveryRequest> createDeliveryRequests(List<Long> pickupIds, List<Long> dropoffIds) {
+        if (pickupIds.size() != dropoffIds.size()) {
+            throw new IllegalArgumentException("Pickup and dropoff lists must have the same size.");
+        }
+
+        List<DeliveryRequest> deliveryRequests = new ArrayList<>();
+
+        for (int i = 0; i < pickupIds.size(); i++) {
+            Long pickupId = pickupIds.get(i);
+            Long dropoffId = dropoffIds.get(i);
+
+            // Récupérer les intersections correspondantes
+            Intersection pickup = intersectionRepository.findById(pickupId)
+                    .orElseThrow(() -> new IllegalArgumentException("Pickup ID not found: " + pickupId));
+
+            Intersection dropoff = intersectionRepository.findById(dropoffId)
+                    .orElseThrow(() -> new IllegalArgumentException("Dropoff ID not found: " + dropoffId));
+
+            // Créer une nouvelle DeliveryRequest
+            DeliveryRequest deliveryRequest = new DeliveryRequest();
+            deliveryRequest.setPickup(pickup);
+            deliveryRequest.setDelivery(dropoff);
+
+            // Ajouter à la liste
+            deliveryRequests.add(deliveryRequest);
+        }
+
+        return deliveryRequests;
+    }
 }
+
+
