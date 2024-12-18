@@ -154,6 +154,69 @@ public class CityMapService {
 
         return deliveryRequests;
     }
+
+    public Tour createTourFromXML(String filePath) {
+        try {
+            // Charger le fichier XML
+            File xmlFile = new File(filePath);
+            if (!xmlFile.exists()) {
+                throw new FileNotFoundException("XML file not found: " + filePath);
+            }
+
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(xmlFile);
+            doc.getDocumentElement().normalize();
+
+            // Récupérer l'entrepôt
+            Element entrepotElement = (Element) doc.getElementsByTagName("entrepot").item(0);
+            if (entrepotElement == null) {
+                throw new IllegalArgumentException("Entrepôt not found in XML file.");
+            }
+
+            Long warehouseId = Long.parseLong(entrepotElement.getAttribute("adresse"));
+            Intersection warehouse = intersectionRepository.findById(warehouseId)
+                    .orElseThrow(() -> new IllegalArgumentException("Warehouse intersection not found: " + warehouseId));
+
+            // Créer une nouvelle instance de Tour
+            Tour tour = new Tour();
+            tour.setWarehouse(warehouse);
+
+            // Parcourir les livraisons
+            NodeList livraisonNodes = doc.getElementsByTagName("livraison");
+            List<DeliveryRequest> deliveryRequests = new ArrayList<>();
+            for (int i = 0; i < livraisonNodes.getLength(); i++) {
+                Element livraisonElement = (Element) livraisonNodes.item(i);
+
+                Long pickupId = Long.parseLong(livraisonElement.getAttribute("adresseEnlevement"));
+                Long deliveryId = Long.parseLong(livraisonElement.getAttribute("adresseLivraison"));
+
+                Intersection pickup = intersectionRepository.findById(pickupId)
+                        .orElseThrow(() -> new IllegalArgumentException("Pickup intersection not found: " + pickupId));
+                Intersection delivery = intersectionRepository.findById(deliveryId)
+                        .orElseThrow(() -> new IllegalArgumentException("Delivery intersection not found: " + deliveryId));
+
+                DeliveryRequest deliveryRequest = new DeliveryRequest();
+                deliveryRequest.setPickup(pickup);
+                deliveryRequest.setDelivery(delivery);
+
+                deliveryRequests.add(deliveryRequest);
+            }
+
+            // Associer les DeliveryRequests au Tour
+            tour.setDeliveryRequests(deliveryRequests);
+
+            return tour;
+
+        } catch (Exception e) {
+            System.err.println("Error parsing XML file: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Error creating Tour from XML file", e);
+        }
+    }
+
+
+
 }
 
 

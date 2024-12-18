@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -124,6 +126,34 @@ public class CityMapController {
             // Gestion des erreurs
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error optimizing and persisting the tour: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/import/load-tour-from-xml")
+    public ResponseEntity<?> loadTourFromXML(@RequestParam("filePath") String filePath) {
+        try {
+            // Étape 1 : Créer le Tour à partir du fichier XML
+            Tour tour = cityMapService.createTourFromXML("src/main/resources/fichiersXMLPickupDelivery/" + filePath);
+
+            // Étape 2 : Récupérer les données pour formater la réponse
+            Long startId = tour.getWarehouse().getId();
+            List<Long> pickupIds = tour.getDeliveryRequests().stream()
+                    .map(request -> request.getPickup().getId())
+                    .toList();
+            List<Long> dropoffIds = tour.getDeliveryRequests().stream()
+                    .map(request -> request.getDelivery().getId())
+                    .toList();
+
+            // Étape 3 : Formater la réponse
+            Map<String, Object> response = new HashMap<>();
+            response.put("start", startId);
+            response.put("pickups", pickupIds);
+            response.put("dropoffs", dropoffIds);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error creating tour from XML: " + e.getMessage());
         }
     }
 

@@ -17,7 +17,7 @@ public class Tour {
     private Intersection warehouse;
 
     @ManyToOne
-    @JoinColumn(name = "courier_id", nullable = false)
+    @JoinColumn(name = "courier_id", nullable = true)
     private Courier courier;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
