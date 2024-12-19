@@ -167,6 +167,8 @@ public class CityMapController {
                     })
                     .toList();
 
+            Courier courier = tour.getCourier(); // Récupérer le coursier
+
             // Étape 5 : Préparer la réponse finale pour le front-end
             Map<String, Object> response = new HashMap<>();
             response.put("warehouse", Map.of(
@@ -186,6 +188,10 @@ public class CityMapController {
                     ))
                     .toList());
             response.put("route", coordinates);
+            response.put("courier", courier != null ? Map.of(
+                    "id", courier.getId(),
+                    "name", courier.getName()
+            ) : null); // Inclure le coursier si disponible
 
             // Retourner la réponse formatée
             return ResponseEntity.ok(response);
