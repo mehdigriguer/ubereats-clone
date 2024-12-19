@@ -263,6 +263,8 @@ public class CityMapService {
 
                 Long pickupId = Long.parseLong(livraisonElement.getAttribute("adresseEnlevement"));
                 Long deliveryId = Long.parseLong(livraisonElement.getAttribute("adresseLivraison"));
+                Long pickupDuration = Long.parseLong(livraisonElement.getAttribute("dureeEnlevement"));
+                Long deliveryDuration = Long.parseLong(livraisonElement.getAttribute("dureeLivraison"));
 
                 Intersection pickup = intersectionRepository.findById(pickupId)
                         .orElseThrow(() -> new IllegalArgumentException("Pickup intersection not found: " + pickupId));
@@ -272,6 +274,8 @@ public class CityMapService {
                 DeliveryRequest deliveryRequest = new DeliveryRequest();
                 deliveryRequest.setPickup(pickup);
                 deliveryRequest.setDelivery(delivery);
+                deliveryRequest.setPickupDuration(pickupDuration);
+                deliveryRequest.setDeliveryDuration(deliveryDuration);
 
                 deliveryRequests.add(deliveryRequest);
             }

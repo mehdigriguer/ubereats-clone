@@ -10,10 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/city-map")
@@ -226,19 +223,24 @@ public class CityMapController {
 
             // Étape 2 : Récupérer les données nécessaires pour la réponse
             Long startId = tour.getWarehouse().getId();
-            List<Long> pickupIds = tour.getDeliveryRequests().stream()
-                    .map(request -> request.getPickup().getId())
-                    .toList();
-            List<Long> dropoffIds = tour.getDeliveryRequests().stream()
-                    .map(request -> request.getDelivery().getId())
-                    .toList();
-
+            List<Long> pickupIds = new ArrayList<>();
+            List<Long> dropoffIds = new ArrayList<>();
+            List<Double> pickupDurations = new ArrayList<>();
+            List<Double> deliveryDurations = new ArrayList<>();
+            for (DeliveryRequest request : tour.getDeliveryRequests()) {
+                pickupIds.add(request.getPickup().getId());
+                dropoffIds.add(request.getDelivery().getId());
+                pickupDurations.add(request.getPickupDuration()); // Already in seconds
+                deliveryDurations.add(request.getDeliveryDuration()); // Already in seconds
+            }
             // Étape 3 : Appeler l'algorithme pour optimiser la route
             List<Long> optimizedPath = PathFinder.greedyOptimizeDeliverySequenceWithPath(
                     loadedCityMap,
                     startId,
                     pickupIds,
-                    dropoffIds
+                    dropoffIds,
+                    pickupDurations,
+                    deliveryDurations
             );
 
             if (optimizedPath == null || optimizedPath.isEmpty()) {

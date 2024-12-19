@@ -15,7 +15,17 @@ public class PathFinder {
     private static final double SPEED_KMH = 15.0; // vitesse du livreur en km/h
 
     public static List<Long> greedyOptimizeDeliverySequenceWithPath(
-            CityMap cityMap, long start, List<Long> pickups, List<Long> dropoffs) {
+            CityMap cityMap,
+            long start,
+            List<Long> pickups,
+            List<Long> dropoffs,
+            List<Double> pickupDurations, // List of durations for each pickup in seconds
+            List<Double> deliveryDurations // List of durations for each delivery in seconds
+    ) {
+        // Validate input sizes
+        if (pickups.size() != pickupDurations.size() || dropoffs.size() != deliveryDurations.size()) {
+            throw new IllegalArgumentException("Pickups and dropoffs must match the size of their respective durations.");
+        }
 
         List<Long> bestPath = null;
         double bestTime = Double.MAX_VALUE;
@@ -54,7 +64,6 @@ public class PathFinder {
             }
 
             // Explore pickups
-            // Explore pickups
             for (long pickup : currentState.unvisitedPickups) {
                 List<Long> pathToPickup = aStar(cityMap, currentState.currentPosition, pickup, false);
                 if (pathToPickup != null) {
@@ -64,6 +73,12 @@ public class PathFinder {
                     State newState = currentState.clone();
                     newState.path.addAll(pathToPickup.subList(1, pathToPickup.size()));
                     newState.elapsedTime += calculatePathTime(cityMap, pathToPickup);
+
+                    // Convert pickup duration to minutes and add it
+                    double pickupDurationInMinutes = pickupDurations.get(pickups.indexOf(pickup)) / 60.0;
+                    newState.elapsedTime += pickupDurationInMinutes;
+                    System.out.println("Pickup Duration Added (in minutes): " + pickupDurationInMinutes);
+
                     newState.currentPosition = pickup;
 
                     // Record pickup time immediately
@@ -93,7 +108,13 @@ public class PathFinder {
                         continue; // Skip this delivery if pickup time is missing
                     }
 
+
+                    // Convert delivery duration to minutes and add it
+                    double deliveryDurationInMinutes = deliveryDurations.get(dropoffs.indexOf(delivery)) / 60.0;
+
+                    // Total time from pickup to delivery
                     double timeFromPickup = timeToDelivery - currentState.pickupTimes.get(pickup);
+
                     System.out.println("Evaluating Delivery: " + delivery);
                     System.out.println("Path to Delivery: " + pathToDelivery);
                     System.out.println("Time to Delivery: " + timeToDelivery);
@@ -102,14 +123,15 @@ public class PathFinder {
                     if (timeFromPickup <= MAX_DELIVERY_TIME) {
                         State newState = currentState.clone();
                         newState.path.addAll(pathToDelivery.subList(1, pathToDelivery.size()));
-                        newState.elapsedTime = timeToDelivery;
+                        newState.elapsedTime = timeToDelivery + deliveryDurationInMinutes;
+                        System.out.println("Delivery Duration Added (in minutes): " + deliveryDurationInMinutes);
+
                         newState.currentPosition = delivery;
                         newState.activeDeliveries.remove(pickup);
                         queue.add(newState);
                     }
                 }
             }
-
         }
 
         if (bestPath == null) {
@@ -119,6 +141,17 @@ public class PathFinder {
         System.out.println("\nBest Path Found: " + bestPath);
         System.out.println("Minimum Time: " + bestTime);
         return bestPath;
+    }
+
+    public static List<Long> greedyOptimizeDeliverySequenceWithPath(
+            CityMap cityMap,
+            long start,
+            List<Long> pickups,
+            List<Long> dropoffs) {
+        return greedyOptimizeDeliverySequenceWithPath(cityMap, start, pickups, dropoffs,
+                Collections.nCopies(pickups.size(), 0.0), // Default pickup durations
+                Collections.nCopies(dropoffs.size(), 0.0) // Default delivery durations
+        );
     }
 
     private static double calculatePathDistance(CityMap cityMap, List<Long> path) {
@@ -142,6 +175,7 @@ public class PathFinder {
         double distance = calculatePathDistance(cityMap, path); // Ensure calculatePathDistance is implemented
         return distance / (SPEED_KMH * 1000.0 / 60); // Convert km/h to minutes
     }
+
 
     private static List<Long> aStar(CityMap cityMap, long start, long goal, boolean applyConstraint) {
         Map<Long, Double> gScore = new HashMap<>();
@@ -198,4 +232,3 @@ public class PathFinder {
         return path;
     }
 }
-

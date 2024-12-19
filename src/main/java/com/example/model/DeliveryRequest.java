@@ -23,6 +23,23 @@ public class DeliveryRequest {
     @JoinColumn(name = "delivery_intersection_id", nullable = false) // Clé étrangère pour la delivery
     private Intersection delivery;
 
+    @Column(name = "pickup_duration")
+    private double pickupDuration;
+
+    @Column(name = "delivery_duration")
+    private double deliveryDuration;
+    public double getPickupDuration() {
+        return pickupDuration;
+    }
+    public void setPickupDuration(double pickupDuration) {
+        this.pickupDuration = pickupDuration;
+    }
+    public double getDeliveryDuration() {
+        return deliveryDuration;
+    }
+    public void setDeliveryDuration(double deliveryDuration) {
+        this.deliveryDuration = deliveryDuration;
+    }
     // Constructeur par défaut requis par JPA
     public DeliveryRequest() {}
 
