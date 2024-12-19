@@ -135,7 +135,7 @@ public class CityMapController {
             // Étape 1 : Créer le Tour à partir du fichier XML
             Tour tour = cityMapService.createTourFromXML("src/main/resources/fichiersXMLPickupDelivery/" + filePath);
 
-            // Étape 2 : Récupérer les données pour formater la réponse
+            // Étape 2 : Récupérer les données nécessaires pour la réponse
             Long startId = tour.getWarehouse().getId();
             List<Long> pickupIds = tour.getDeliveryRequests().stream()
                     .map(request -> request.getPickup().getId())
@@ -144,17 +144,57 @@ public class CityMapController {
                     .map(request -> request.getDelivery().getId())
                     .toList();
 
-            // Étape 3 : Formater la réponse
-            Map<String, Object> response = new HashMap<>();
-            response.put("start", startId);
-            response.put("pickups", pickupIds);
-            response.put("dropoffs", dropoffIds);
+            // Étape 3 : Appeler l'algorithme pour optimiser la route
+            List<Long> optimizedPath = PathFinder.greedyOptimizeDeliverySequenceWithPath(
+                    loadedCityMap,
+                    startId,
+                    pickupIds,
+                    dropoffIds
+            );
 
+            if (optimizedPath == null || optimizedPath.isEmpty()) {
+                return ResponseEntity.badRequest().body("Failed to optimize the delivery sequence.");
+            }
+
+            // Étape 4 : Conversion des IDs en coordonnées lat/lng
+            List<double[]> coordinates = optimizedPath.stream()
+                    .map(id -> {
+                        double[] latLng = cityMapService.findLatLongFromId(id);
+                        if (latLng == null) {
+                            throw new IllegalArgumentException("ID not found in map: " + id);
+                        }
+                        return latLng;
+                    })
+                    .toList();
+
+            // Étape 5 : Préparer la réponse finale pour le front-end
+            Map<String, Object> response = new HashMap<>();
+            response.put("warehouse", Map.of(
+                    "id", startId,
+                    "coordinates", cityMapService.findLatLongFromId(startId)
+            ));
+            response.put("pickups", pickupIds.stream()
+                    .map(id -> Map.of(
+                            "id", id,
+                            "coordinates", cityMapService.findLatLongFromId(id)
+                    ))
+                    .toList());
+            response.put("dropoffs", dropoffIds.stream()
+                    .map(id -> Map.of(
+                            "id", id,
+                            "coordinates", cityMapService.findLatLongFromId(id)
+                    ))
+                    .toList());
+            response.put("route", coordinates);
+
+            // Retourner la réponse formatée
             return ResponseEntity.ok(response);
+
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error creating tour from XML: " + e.getMessage());
         }
     }
+
 
 }
