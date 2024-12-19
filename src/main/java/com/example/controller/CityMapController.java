@@ -52,6 +52,22 @@ public class CityMapController {
         }
     }
 
+    @PostMapping("/loadmap-content")
+    public ResponseEntity<?> loadCityMap(@RequestBody String xmlContent) {
+        try {
+            // Charger la carte depuis le contenu XML
+            loadedCityMap = cityMapService.loadFromXMLContent(xmlContent);
+
+            // Retourner la carte chargée en tant que réponse JSON
+            return ResponseEntity.ok(loadedCityMap);
+        } catch (Exception e) {
+            // Retourner un message d'erreur en cas d'échec
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error loading city map from XML content: " + e.getMessage());
+        }
+    }
+
+
     @PostMapping("/optimize-sequence")
     public ResponseEntity<?> optimizeAndPersistTour(@RequestBody Map<String, Object> requestData) {
         try {
@@ -199,6 +215,79 @@ public class CityMapController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error creating tour from XML: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/import/load-tour-from-xml-content")
+    public ResponseEntity<?> loadTourFromXMLContent(@RequestBody String fileContent) {
+        try {
+            // Étape 1 : Créer le Tour à partir du contenu XML
+            Tour tour = cityMapService.createTourFromXMLContent(fileContent);
+
+            // Étape 2 : Récupérer les données nécessaires pour la réponse
+            Long startId = tour.getWarehouse().getId();
+            List<Long> pickupIds = tour.getDeliveryRequests().stream()
+                    .map(request -> request.getPickup().getId())
+                    .toList();
+            List<Long> dropoffIds = tour.getDeliveryRequests().stream()
+                    .map(request -> request.getDelivery().getId())
+                    .toList();
+
+            // Étape 3 : Appeler l'algorithme pour optimiser la route
+            List<Long> optimizedPath = PathFinder.greedyOptimizeDeliverySequenceWithPath(
+                    loadedCityMap,
+                    startId,
+                    pickupIds,
+                    dropoffIds
+            );
+
+            if (optimizedPath == null || optimizedPath.isEmpty()) {
+                return ResponseEntity.badRequest().body("Failed to optimize the delivery sequence.");
+            }
+
+            // Étape 4 : Conversion des IDs en coordonnées lat/lng
+            List<double[]> coordinates = optimizedPath.stream()
+                    .map(id -> {
+                        double[] latLng = cityMapService.findLatLongFromId(id);
+                        if (latLng == null) {
+                            throw new IllegalArgumentException("ID not found in map: " + id);
+                        }
+                        return latLng;
+                    })
+                    .toList();
+
+            Courier courier = tour.getCourier(); // Récupérer le coursier
+
+            // Étape 5 : Préparer la réponse finale pour le front-end
+            Map<String, Object> response = new HashMap<>();
+            response.put("warehouse", Map.of(
+                    "id", startId,
+                    "coordinates", cityMapService.findLatLongFromId(startId)
+            ));
+            response.put("pickups", pickupIds.stream()
+                    .map(id -> Map.of(
+                            "id", id,
+                            "coordinates", cityMapService.findLatLongFromId(id)
+                    ))
+                    .toList());
+            response.put("dropoffs", dropoffIds.stream()
+                    .map(id -> Map.of(
+                            "id", id,
+                            "coordinates", cityMapService.findLatLongFromId(id)
+                    ))
+                    .toList());
+            response.put("route", coordinates);
+            response.put("courier", courier != null ? Map.of(
+                    "id", courier.getId(),
+                    "name", courier.getName()
+            ) : null); // Inclure le coursier si disponible
+
+            // Retourner la réponse formatée
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error creating tour from XML content: " + e.getMessage());
         }
     }
 
