@@ -10,6 +10,10 @@ public class State implements Cloneable {
     public Map<Long, Double> pickupTimes;
     public double elapsedTime;
 
+    // Durations for pickups and deliveries in seconds (default values)
+    public double pickupDuration = 0.0;  // Default: 0 seconds
+    public double deliveryDuration = 0.0;  // Default: 0 seconds
+
     public State(long currentPosition, List<Long> path, Set<Long> unvisitedPickups, Map<Long, Long> activeDeliveries, double elapsedTime) {
         this.currentPosition = currentPosition;
         this.path = path;
@@ -27,6 +31,8 @@ public class State implements Cloneable {
             clone.unvisitedPickups = new HashSet<>(this.unvisitedPickups);
             clone.activeDeliveries = new HashMap<>(this.activeDeliveries);
             clone.pickupTimes = new HashMap<>(this.pickupTimes);
+            clone.pickupDuration = this.pickupDuration;
+            clone.deliveryDuration = this.deliveryDuration;
             return clone;
         } catch (CloneNotSupportedException e) {
             throw new AssertionError("Cloning failed", e);

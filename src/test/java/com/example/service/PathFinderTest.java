@@ -23,9 +23,9 @@ class PathFinderTest {
 
         Map<Long, List<RoadSegment>> graph = new HashMap<>();
         graph.put(1L, Arrays.asList(new RoadSegment(1L, 2L, "Street A", 1000)));
-        graph.put(2L, Arrays.asList(new RoadSegment(2L, 4L, "Street B", 1200)));
-        graph.put(3L, Arrays.asList(new RoadSegment(4L, 3L, "Street C", 1000)));
-        graph.put(4L, Arrays.asList(new RoadSegment(3L, 5L, "Street D", 1000)));
+        graph.put(2L, Arrays.asList(new RoadSegment(2L, 4L, "Street B", 100)));
+        graph.put(4L, Arrays.asList(new RoadSegment(4L, 3L, "Street C", 100)));
+        graph.put(3L, Arrays.asList(new RoadSegment(3L, 5L, "Street D", 100)));
         graph.put(5L, Arrays.asList(new RoadSegment(5L, 1L, "Street E", 2000)));
         cityMap.setGraph(graph);
 
@@ -38,7 +38,7 @@ class PathFinderTest {
         assertNotNull(result, "The result should not be null");
         System.out.println("Optimized Path: " + result);
 
-        List<Long> expectedPath = Arrays.asList(1L, 2L, 3L, 4L, 5L, 1L);
+        List<Long> expectedPath = Arrays.asList(1L, 2L, 4L, 3L, 5L, 1L);
         assertEquals(expectedPath, result, "The optimized path is not as expected");
     }
 
@@ -86,6 +86,54 @@ class PathFinderTest {
         assertEquals(expectedPath, result, "The optimized path is not as expected");
     }
 
+    @Test
+    void testConstrainedPathReorderingWithDurations() {
+        CityMap cityMap = new CityMap();
+
+        // Add intersections
+        Map<Long, Intersection> intersections = new HashMap<>();
+        for (long i = 1; i <= 5; i++) {
+            intersections.put(i, new Intersection(i, 45.0 + i, 5.0 + i));
+        }
+        cityMap.setIntersections(intersections);
+
+        // Add road segments
+        Map<Long, List<RoadSegment>> graph = new HashMap<>();
+        graph.put(1L, Arrays.asList(new RoadSegment(1L, 2L, "Street A", 2000),
+                                    new RoadSegment(1L, 4L, "Street B", 1000)));
+        graph.put(2L, Arrays.asList(new RoadSegment(2L, 3L, "Street C", 100),
+                                    new RoadSegment(2L, 4L, "Street D", 100)));
+        graph.put(3L, Arrays.asList(new RoadSegment(3L, 5L, "Street E", 100),
+                                    new RoadSegment(3L, 4L, "Street F", 500)));
+        graph.put(4L, Arrays.asList(new RoadSegment(4L, 5L, "Street G", 600),
+                                    new RoadSegment(4L, 2L, "Street H", 1000),
+                                    new RoadSegment(4L, 3L, "Street I", 500)));
+        graph.put(5L, Arrays.asList(new RoadSegment(5L, 3L, "Street J", 100),
+                                    new RoadSegment(5L, 1L, "Street K", 4000)));
+        cityMap.setGraph(graph);
+
+        // Define the test scenario
+        long start = 1;
+        List<Long> pickups = Arrays.asList(2L, 4L);
+        List<Long> dropoffs = Arrays.asList(3L, 5L);
+
+        // Define pickup and delivery durations (in seconds)
+        List<Double> pickupDurations = Arrays.asList(120.0, 30.0);  // 2 minutes and 3 minutes
+        List<Double> deliveryDurations = Arrays.asList(30.0, 300.0);  // 4 minutes and 5 minutes
+
+        // Run the pathfinding method
+        List<Long> result = PathFinder.greedyOptimizeDeliverySequenceWithPath(
+                cityMap, start, pickups, dropoffs, pickupDurations, deliveryDurations);
+
+        // Validate results
+        assertNotNull(result, "The result should not be null");
+        System.out.println("Optimized Path: " + result);
+
+        // Expected path: Reordering due to constraints
+        List<Long> expectedPath = Arrays.asList(1L, 2L, 4L, 3L, 5L, 1L);
+        assertEquals(expectedPath, result, "The optimized path is not as expected");
+    }
+
 
 
     @Test
@@ -120,7 +168,7 @@ class PathFinderTest {
         List<Long> dropoffs = Arrays.asList(5L, 6L, 7L);
 
         // Run the pathfinding method
-        List<Long> result = PathFinder.optimizeDeliverySequenceWithPath(cityMap, start, pickups, dropoffs);
+        List<Long> result = PathFinder.greedyOptimizeDeliverySequenceWithPath(cityMap, start, pickups, dropoffs);
 
         // Validate results
         List<Long> expectedPath = Arrays.asList(1L, 2L, 3L, 4L, 5L, 6L, 7L);
@@ -154,7 +202,7 @@ class PathFinderTest {
         List<Long> dropoffs = Arrays.asList(3L, 2L);
 
         // Run the pathfinding method
-        List<Long> result = PathFinder.optimizeDeliverySequenceWithPath(cityMap, start, pickups, dropoffs);
+        List<Long> result = PathFinder.greedyOptimizeDeliverySequenceWithPath(cityMap, start, pickups, dropoffs);
 
         // Validate results
         List<Long> expectedPath = Arrays.asList(1L, 2L, 3L, 4L, 2L);
@@ -190,7 +238,7 @@ class PathFinderTest {
 
         // Run the pathfinding method and expect an exception
         Exception exception = assertThrows(RuntimeException.class, () ->
-                PathFinder.optimizeDeliverySequenceWithPath(cityMap, start, pickups, dropoffs));
+                PathFinder.greedyOptimizeDeliverySequenceWithPath(cityMap, start, pickups, dropoffs));
 
         assertTrue(exception.getMessage().contains("No feasible route found"), "Expected exception for unreachable dropoff");
     }
